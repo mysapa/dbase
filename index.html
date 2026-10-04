@@ -10,12 +10,18 @@
 :root{--bg:#fff;--fg:#1b2a2f;--mute:#5d6d72;--line:#d9e0e2;--acc:#0f5c63;--hover:#eef5f5}
 @media(prefers-color-scheme:dark){:root{--bg:#10191b;--fg:#e4eceb;--mute:#93a4a6;--line:#27373a;--acc:#5fc2c8;--hover:#17252a}}
 *{box-sizing:border-box}
-body{margin:0;padding:20px;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif}
-.stats{display:flex;flex-wrap:wrap;gap:8px 32px;margin-bottom:16px}
-.stat b{display:block;font-size:26px;font-weight:600;line-height:1.1;color:var(--acc)}
-.stat span{font-size:13px;color:var(--mute)}
-input[type=search]{width:100%;max-width:480px;padding:10px 12px;font:inherit;color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px}
+body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif}
+header{padding:20px 20px 22px;color:#fff;background:linear-gradient(135deg,#0a2a66 0%,#1556b8 55%,#4fa8e8 100%)}
+.stats{display:flex;flex-wrap:wrap;gap:14px 28px;margin-bottom:18px}
+.stat{display:flex;align-items:center;gap:10px}
+.ico{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28)}
+.ico svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.stat b{display:block;font-size:24px;font-weight:600;line-height:1.1}
+.stat span{font-size:13px;color:rgba(255,255,255,.8)}
+input[type=search]{width:100%;max-width:480px;padding:10px 12px;font:inherit;color:#1b2a2f;background:#fff;border:0;border-radius:8px}
 input[type=search]:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+input[type=search]:focus{outline-color:#bfe3ff}
+main{padding:4px 20px calc(110px + env(safe-area-inset-bottom))}
 .wrap{overflow-x:auto;margin-top:16px}
 table{width:100%;border-collapse:collapse}
 th{text-align:left;font-weight:600;font-size:13px;color:var(--mute);padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap}
@@ -23,7 +29,7 @@ td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 #tb tr{cursor:pointer}
 #tb tr:hover{background:var(--hover)}
 .msg{padding:24px 10px;color:var(--mute)}
-.more{margin:14px 0;padding:8px 16px;font:inherit;color:var(--acc);background:none;border:1px solid var(--acc);border-radius:6px;cursor:pointer}
+.more{display:block;margin:14px auto 40px;padding:8px 16px;font:inherit;color:var(--acc);background:none;border:1px solid var(--acc);border-radius:6px;cursor:pointer}
 dialog{width:min(560px,94vw);max-height:88vh;padding:24px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px}
 dialog::backdrop{background:rgba(0,0,0,.5)}
 .id{text-align:center;margin-bottom:18px}
@@ -34,16 +40,18 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 </head>
 <body>
 
+<header>
 <div class="stats">
-  <div class="stat"><b id="sTotal">–</b><span>Jumlah data</span></div>
-  <div class="stat"><b id="sL">–</b><span>Laki-laki</span></div>
-  <div class="stat"><b id="sP">–</b><span>Perempuan</span></div>
-  <div class="stat"><b id="sW">–</b><span>Wafat</span></div>
-  <div class="stat"><b id="sF">–</b><span>Data filter</span></div>
+  <div class="stat"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4 2 4 5"/></svg></div><div><b id="sTotal">–</b><span>Jumlah data</span></div></div>
+  <div class="stat"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/></svg></div><div><b id="sL">–</b><span>Laki-laki</span></div></div>
+  <div class="stat"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/></svg></div><div><b id="sP">–</b><span>Perempuan</span></div></div>
+  <div class="stat"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V10a6 6 0 0 1 12 0v11z"/><path d="M12 9v6M10 11h4"/></svg></div><div><b id="sW">–</b><span>Wafat</span></div></div>
+  <div class="stat"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></div><div><b id="sF">–</b><span>Data filter</span></div></div>
 </div>
-
 <input type="search" id="q" placeholder="Cari kata kunci apa saja, mis. wajib pilih" autocomplete="off" aria-label="Cari data">
+</header>
 
+<main>
 <div class="wrap">
   <table>
     <thead><tr><th>Nama</th><th>Alamat</th><th>Usia</th><th>Pekerjaan</th></tr></thead>
@@ -52,6 +60,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   <div id="msg" class="msg">Memuat data…</div>
 </div>
 <button class="more" id="more" hidden>Tampilkan lebih banyak</button>
+</main>
 
 <dialog id="dlg">
   <button class="x" id="close" aria-label="Tutup">&times;</button>
@@ -69,7 +78,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 <script>
 // ====== KONFIGURASI ======
 const API_URL = 'https://script.google.com/macros/s/AKfycbw-KNfQx41Mdg7HQt949Jo5qvCpboVbKX0CIB2DD9L5BJuzqb8NjZWYFtEQlmMKlRda/exec';
-// NIK dikirim oleh form induk lewat URL
+
 const NIK = new URLSearchParams(location.search).get('nik') || '';
 const PAGE = 100;
 
