@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Database Penduduk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--fg:#1b2a2f;--mute:#5d6d72;--line:#d9e0e2;--acc:#0f5c63;--hover:#eef5f5}
+@media(prefers-color-scheme:dark){:root{--bg:#10191b;--fg:#e4eceb;--mute:#93a4a6;--line:#27373a;--acc:#5fc2c8;--hover:#17252a}}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif}
+.stats{display:flex;flex-wrap:wrap;gap:8px 32px;margin-bottom:16px}
+.stat b{display:block;font-size:26px;font-weight:600;line-height:1.1;color:var(--acc)}
+.stat span{font-size:13px;color:var(--mute)}
+input[type=search]{width:100%;max-width:480px;padding:10px 12px;font:inherit;color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px}
+input[type=search]:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:600;font-size:13px;color:var(--mute);padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+#tb tr{cursor:pointer}
+#tb tr:hover{background:var(--hover)}
+.msg{padding:24px 10px;color:var(--mute)}
+.more{margin:14px 0;padding:8px 16px;font:inherit;color:var(--acc);background:none;border:1px solid var(--acc);border-radius:6px;cursor:pointer}
+dialog{width:min(560px,94vw);max-height:88vh;padding:24px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.id{text-align:center;margin-bottom:18px}
+.id h2{margin:0 0 6px;font-size:20px}
+.id div{color:var(--mute);font-size:14px}
+.x{float:right;background:none;border:0;font-size:24px;line-height:1;color:var(--mute);cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="stats">
+  <div class="stat"><b id="sTotal">–</b><span>Jumlah data</span></div>
+  <div class="stat"><b id="sL">–</b><span>Laki-laki</span></div>
+  <div class="stat"><b id="sP">–</b><span>Perempuan</span></div>
+  <div class="stat"><b id="sW">–</b><span>Wafat</span></div>
+  <div class="stat"><b id="sF">–</b><span>Data filter</span></div>
+</div>
+
+<input type="search" id="q" placeholder="Cari kata kunci apa saja, mis. wajib pilih" autocomplete="off" aria-label="Cari data">
+
+<div class="wrap">
+  <table>
+    <thead><tr><th>Nama</th><th>Alamat</th><th>Usia</th><th>Pekerjaan</th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table>
+  <div id="msg" class="msg">Memuat data…</div>
+</div>
+<button class="more" id="more" hidden>Tampilkan lebih banyak</button>
+
+<dialog id="dlg">
+  <button class="x" id="close" aria-label="Tutup">&times;</button>
+  <div class="id">
+    <h2 id="mNama"></h2>
+    <div>NIK: <span id="mNik"></span></div>
+    <div>NKK: <span id="mNkk"></span></div>
+  </div>
+  <table>
+    <thead><tr><th>Nama</th><th>Usia</th><th>Status</th></tr></thead>
+    <tbody id="mTb"></tbody>
+  </table>
+</dialog>
+
+<script>
+// ====== KONFIGURASI ======
+const API_URL = 'https://script.google.com/macros/s/ISI_DEPLOYMENT_ID_ANDA/exec';
+// NIK dikirim oleh form induk lewat URL: index.html?nik=7471091212020001
+const NIK = new URLSearchParams(location.search).get('nik') || '';
+const PAGE = 100;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let rows = [], filtered = [], shown = 0;
+
+async function load() {
+  try {
+    const res = await fetch(API_URL + '?nik=' + encodeURIComponent(NIK));
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error);
+    rows = d.rows;
+    $('sTotal').textContent = d.stats.total.toLocaleString('id-ID');
+    $('sL').textContent = d.stats.laki.toLocaleString('id-ID');
+    $('sP').textContent = d.stats.perempuan.toLocaleString('id-ID');
+    $('sW').textContent = d.stats.wafat.toLocaleString('id-ID');
+    applyFilter();
+  } catch (e) {
+    $('msg').textContent = 'Data tidak dapat dimuat: ' + e.message;
+  }
+}
+
+function applyFilter() {
+  const terms = $('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+  filtered = terms.length ? rows.filter(r => terms.every(t => r.s.includes(t))) : rows;
+  $('sF').textContent = filtered.length.toLocaleString('id-ID');
+  $('tb').innerHTML = '';
+  shown = 0;
+  $('msg').textContent = filtered.length ? '' : 'Tidak ada data yang cocok dengan kata kunci.';
+  $('msg').hidden = !!filtered.length;
+  renderMore();
+}
+
+function renderMore() {
+  const slice = filtered.slice(shown, shown + PAGE);
+  $('tb').insertAdjacentHTML('beforeend', slice.map((r, i) =>
+    `<tr data-i="${shown + i}"><td>${esc(r.n)}</td><td>${esc(r.a)}</td><td>${esc(r.u)}</td><td>${esc(r.p)}</td></tr>`).join(''));
+  shown += slice.length;
+  $('more').hidden = shown >= filtered.length;
+}
+
+function openModal(r) {
+  $('mNama').textContent = r.n;
+  $('mNik').textContent = r.nik;
+  $('mNkk').textContent = r.nkk;
+  const fam = rows.filter(x => x.nkk && x.nkk === r.nkk);
+  $('mTb').innerHTML = fam.map(x =>
+    `<tr><td>${esc(x.n)}</td><td>${esc(x.u)}</td><td>${esc(x.st)}</td></tr>`).join('');
+  $('dlg').showModal();
+}
+
+let timer;
+$('q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(applyFilter, 250); });
+$('more').addEventListener('click', renderMore);
+$('tb').addEventListener('click', e => {
+  const tr = e.target.closest('tr');
+  if (tr) openModal(filtered[+tr.dataset.i]);
+});
+$('close').addEventListener('click', () => $('dlg').close());
+$('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').close(); });
+
+load();
+</script>
+</body>
+</html>
