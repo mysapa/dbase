@@ -113,7 +113,7 @@ const PAGE = 30;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let rows = [], filtered = [], shown = 0;
+let rows = [], filtered = [], shown = 0, pmSet = new Set();
 
 async function load() {
   try {
@@ -121,6 +121,7 @@ async function load() {
     const d = await res.json();
     if (!d.ok) throw new Error(d.error);
     rows = d.rows;
+    pmSet = new Set(rows.map(r => String(r.pm || '').toLowerCase()).filter(Boolean));
     $('sTotal').textContent = d.stats.total.toLocaleString('id-ID');
     $('sL').textContent = d.stats.laki.toLocaleString('id-ID');
     $('sP').textContent = d.stats.perempuan.toLocaleString('id-ID');
@@ -133,8 +134,18 @@ async function load() {
 }
 
 function applyFilter() {
-  const terms = $('q').value.toLowerCase().split(/\s+/).filter(Boolean);
-  filtered = terms.length ? rows.filter(r => terms.every(t => r.s.includes(t))) : rows;
+  const q = $('q').value.toLowerCase().trim().replace(/\s+/g, ' ');
+  if (!q) {
+    filtered = rows;
+  } else if (pmSet.has(q)) {
+    // Kata kunci sama persis dengan isi kolom AC (mis. "Pemilih Intern"): tampilkan hanya baris dengan isi itu
+    filtered = rows.filter(r => String(r.pm || '').toLowerCase() === q);
+  } else {
+    // Utamakan frasa utuh berurutan; jika tidak ada, semua kata harus ada di baris
+    const frasa = rows.filter(r => r.s.includes(q));
+    const terms = q.split(' ');
+    filtered = frasa.length ? frasa : rows.filter(r => terms.every(t => r.s.includes(t)));
+  }
   $('sF').textContent = filtered.length.toLocaleString('id-ID');
   $('tb').innerHTML = '';
   shown = 0;
